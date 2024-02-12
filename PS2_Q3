@@ -1,0 +1,150 @@
+import numpy as np
+import matplotlib.pyplot as pl
+
+import os
+import imageio
+import imageio.v2 as iio_v2 
+
+dt = 0.7 # select timestep for visualization 
+Nsteps = 170 # select number of timesteps for visualization 
+
+# define initial conditions of vortex rings (vortex centers and circulations)
+y_vor = np.array([40,40,-40,-40]) # y−positions of the 4 vortices
+x_vor = np.array([-75,-55,-75,-55]) # x−positions of the 4 vortices
+k_vor = np.array([50,50,-50,-50]) # line vortex constant
+
+# set up the plot
+pl.ion()
+fig, ax = pl.subplots(1,1)
+p, = ax.plot(x_vor, y_vor, 'ro', markersize=9) # plot initial positions of the vortices
+
+# set up the X Y grid space
+ngrid = 100 # dimension of simulation grid
+Y, X = np.mgrid[-ngrid:ngrid:360j, -ngrid:ngrid:360j] # divide grid into 360 parts (resolution of grid)
+vel_x = np.zeros(np.shape(Y)) # initialize array to hold x velocities at each part of grid
+vel_y = np.zeros(np.shape(Y)) # initialize array to hold y velocities at each part of grid
+
+## calculate x and y velocities over entire grid due to each vortex
+# for each vortex
+for i in range(len(x_vor)): 
+    
+    # calculate distance between vortex and the grid points
+    # neglect np.sqrt as variable needs to be squared to find velocity in next step (faciliate faster run time)
+    dx = X - x_vor[i]
+    dy = Y - y_vor[i]
+    rr = dx**2 + dy**2
+    
+    # calculate x and y velocities due to vortex at each grid point
+    vel_x = vel_x + (dy*(-k_vor[i])/rr)
+    vel_y = vel_y + (dx*k_vor[i]/rr)
+    
+# define boundaries of the simulation box 
+# set equal to size of X Y grid space 
+ax.set_xlim([-ngrid, ngrid])
+ax.set_ylim([-ngrid, ngrid])
+
+# initial plot of the streamlines
+ax.streamplot(X, Y, vel_x, vel_y, density=[1, 1])
+
+# create and save initial plot
+fig.canvas.draw()
+fig.savefig('test.png')
+
+
+
+# make folder to save iterative plots
+folder = "vor_plots"
+path = os.path.join(os.getcwd(), folder)
+os.makedirs(path)
+
+# plot evolution of vortices  
+count = 0
+while count < Nsteps:
+    
+    ## compute and update advection velocities
+    
+    x_vor_new = np.zeros(np.shape([1,1,1,1])) # create new array for the to-be updated vortex x-positions
+    y_vor_new = np.zeros(np.shape([1,1,1,1])) # create new array for the to-be updated vortex y-positions
+    
+    # for each vortex 
+    for i in range(len(x_vor)):  
+        advel_x = 0  # set x advection velocity for vortex i to zero
+        advel_y = 0  # set y advection velocity for vortex i to zero
+        
+        # for each of the other vortices
+        for j in range(len(x_vor)):
+            if (i != j):
+    
+                # find the seperation distance between the vortex centers 
+                dx = x_vor[i] - x_vor[j]   # delta x = x-center - other vortex x position
+                dy = y_vor[i] - y_vor[j]   # delta y = y-center - other vortex y position
+                rr = dx**2 + dy**2          # square of vortex to vortex distance 
+                
+                # add and save the new advection velocities
+                advel_x = advel_x + (dy*(-k_vor[j])/rr) # x-component of velocity at vortex due to other vortex
+                advel_y = advel_y + (dx*k_vor[j]/rr) # y-component of velocity at vortex due to other vortex
+                
+        # update vortex position
+        x_vor_new[i] = x_vor[i] + advel_x*dt
+        y_vor_new[i] = y_vor[i] + advel_y*dt
+
+    # overwrite all 4 original vortex positions to the new, updated ones
+    x_vor = x_vor_new
+    y_vor = y_vor_new
+    
+    # sanity check (print the timestep number and the current vortex positions)
+    print(count, x_vor, y_vor)
+    
+    ## re-initialize the total velocity field
+    
+    vel_x = np.zeros(np.shape(Y)) # reset x velocities to zero
+    vel_y = np.zeros(np.shape(Y)) # reset y velocities to zero
+    
+    # iterate over vortices
+    for i in range(len(x_vor)): 
+        
+        # calculate velocity field at (X,Y) location in grid
+        # use same method as original field was calculated   
+        dx = X - x_vor[i]
+        dy = Y - y_vor[i]
+        rr = dx**2 + dy**2
+        
+        vel_x = vel_x + (dy*(-k_vor[i])/rr) # x-component of velocity at (X,Y)
+        vel_y = vel_y + (dx*k_vor[i]/rr) # y-component of velocity at (X,Y)
+
+    ## update plot
+    
+    # clear plot from before 
+    ax.clear()
+    
+    # update streamlines and plot vortex positions 
+    ax.streamplot(X, Y, vel_x, vel_y, density=[1,1])
+    p, = ax.plot(x_vor, y_vor, 'ro', markersize=8)
+    
+    # title
+    ax.set_title('Time Count = {}'.format(count))
+    
+    # save plot for each timestep (in folder)
+    fig.savefig(os.path.join(path, 'vor{:03}.png'.format(count)))
+
+    count += 1
+
+
+
+## create gif of vortex plots over time
+
+# create list to hold plot names
+plots = []
+
+# for each timestep plot saved 
+for i in range(Nsteps):
+    # find each plot (name is in the form vor###.png)
+    file = f'vor{str(i).zfill(3)}.png' 
+    filepath = os.path.join(path, file) 
+    plots.append(iio_v2.imread(filepath)) # save plot to list 
+
+# save gif to the same folder as vortex images
+gif_path = os.path.join(path, 'vor.gif')
+
+# use imageio to make gif of vortex movement
+imageio.mimsave(gif_path, plots, duration=0.1) # duration sets length each plot is shown in gif
