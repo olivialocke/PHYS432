@@ -11,5 +11,3 @@ Briefly consulted with Lekima during the coding process.
 
 @author : Olivia Locke
 02/12/2024
-
-![](https://github.com/PHYS432/vor.gif)
