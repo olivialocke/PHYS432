@@ -11,3 +11,5 @@ Briefly consulted with Lekima during the coding process.
 
 @author : Olivia Locke
 02/12/2024
+
+![vor](https://github.com/olivialocke/PHYS432/assets/105638795/59db9d03-0fea-48f0-988c-41bc731b7a1c)
