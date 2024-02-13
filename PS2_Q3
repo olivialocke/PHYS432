@@ -44,7 +44,9 @@ ax.set_xlim([-ngrid, ngrid])
 ax.set_ylim([-ngrid, ngrid])
 
 # initial plot of the streamlines
-ax.streamplot(X, Y, vel_x, vel_y, density=[1, 1])
+ax.streamplot(X, Y, vel_x, vel_y, density=[.2,.2], broken_streamlines=False) # unbroken streamlines
+# switch line above for line below if want default streamlines (see README for visual)
+# ax.streamplot(X, Y, vel_x, vel_y, density=[1, 1]) # default streamlines
 
 # create and save initial plot
 fig.canvas.draw()
@@ -118,8 +120,11 @@ while count < Nsteps:
     ax.clear()
     
     # update streamlines and plot vortex positions 
-    ax.streamplot(X, Y, vel_x, vel_y, density=[1,1])
-    p, = ax.plot(x_vor, y_vor, 'ro', markersize=8)
+    ax.streamplot(X, Y, vel_x, vel_y, density=[.2,.2], broken_streamlines=False) # unbroken streamlines
+    # switch line above for line below if want default streamlines (see README for visual)
+    # ax.streamplot(X, Y, vel_x, vel_y, density=[1, 1]) # default streamlines
+
+    p, = ax.plot(x_vor, y_vor, 'ro', markersize=8) # plot vortex positions
     
     # title
     ax.set_title('Time Count = {}'.format(count))
