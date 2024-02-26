@@ -4,5 +4,7 @@ The x-axis is perpendicular to the fluid flow, the plane (no slip boundary condi
 
 Output: animation of the time-evolution of the velocity field of lava flow (shown below). 
 
+![animation](https://github.com/olivialocke/PHYS432/assets/105638795/7f2e800c-a32a-4b8e-9e90-0cba1d33194c)
+
 @author : Olivia Locke 02/24/2024
 Collaborated with Alexandra Rochon. 
