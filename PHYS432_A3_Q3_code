@@ -1,0 +1,110 @@
+"""
+PHYS 432 W2024
+Assignment 3, Question 3: Lava flow 
+
+@author: Olivia Locke
+Feb. 26th 2024
+"""
+
+import numpy as np
+import matplotlib.pyplot as pl
+import math
+import imageio
+
+
+## set up the grid and advection and diffusion parameters
+
+Ngrid = 50 # size of x grid
+Nsteps = 316 # select number of timesteps for visualization 
+dt = 0.00006 # select timestep for visualization
+
+H = 0.1 # height of lava
+dx = H/Ngrid # x steps (height of lava is entire x axis, divide by grid)
+
+alpha = 15 # angle of incline lava is flowing down (degrees)
+g = 9.81 # gravitational acceleration (m/s)
+
+v = 1 # diffusion coefficient is the viscosity of lava (m^2/s)
+beta = v*dt/dx**2 # define beta as seen in numerical methods notes
+
+# set x and y 
+x = np.arange(Ngrid)*dx
+u = np.copy(x)*0/Ngrid # initial condition (velocity zero everywhere)
+
+
+## set up plot
+
+pl.ion()
+fig, ax = pl.subplots(1,1)
+
+# set axis limits 
+ax.set_xlim([0,H]) # x ranges to height of lava 
+ax.set_ylim([0,0.02]) 
+
+# set axis labels
+ax.set_xlabel('x (meters)')
+ax.set_ylabel('Uy velocity (m/s)')
+
+
+## overplot the steady-state solution
+
+# define steady state equation 
+def steadystate(x):
+    return -(g/v)*math.sin(math.radians(alpha))*((1/2)*(x**2)-H*x)
+
+# plot
+ax.plot(x, steadystate(x), 'b-')
+
+
+## create plotting object 
+
+plt, = ax.plot(x, u, 'ro', alpha=0.7)
+
+# set up matrix for diffusion operator
+A = np.eye(Ngrid) * (1.0 + 2.0 * beta) + np.eye(Ngrid, k=1) * -beta + np.eye(Ngrid, k=-1) * -beta
+
+# stress free boundary condition
+A[-1][-1] = 1.0 + beta
+   
+# no slip boundary condition (first element is fixed)
+A[0][0] = 1.0
+A[0][1] = 0
+
+fig.canvas.draw() # draw plot
+
+
+## while loop for evolution
+
+count = 0 
+all_plots = []  # create empty list to append the plot for each step to 
+
+while count < Nsteps:
+    
+    ## calculate diffusion first
+    # solve for the next timestep
+    u = np.linalg.solve(A, u)
+    
+    ## calculate advection
+    # gravity term (add advection to diffusion)
+    u = u + dt*g*math.sin(math.radians(alpha))
+    
+    u[0] = 0.0 # ensure boundary condition remains 
+    
+    
+    plt.set_ydata(u) # update the plot
+    
+    # set title with timestamp
+    ax.set_title('Lava Flow Velocity Profile (time count = {})'.format(count))
+    
+    
+    ## draw and save plot
+    fig.canvas.draw()
+    
+    this_plot = np.array(fig.canvas.renderer._renderer) # convert plot to array
+    all_plots.append(this_plot) # append plot to list
+    
+    
+    count += 1 # next step
+    
+# save plots for each step to gif
+imageio.mimsave('lava_flow.gif', all_plots, duration=2)
