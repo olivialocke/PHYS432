@@ -5,7 +5,7 @@ from IPython.display import display, clear_output
 
 ## define parameters  
 Ngrid = 60 # plot's grid size
-Nsteps = 5000 # number of steps
+Nsteps = 700 # number of steps
 dt = 0.01 # timestep size
 dx = 1.0 # x-step size 
 
